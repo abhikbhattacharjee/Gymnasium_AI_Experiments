@@ -6,14 +6,18 @@ from tensorflow.keras.optimizers import Adam
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 class agentTrain:
 
-    def __init__(self, env): 
+    def __init__(self, env, lr, epsilon): 
         self.action = env.action_space # agent policy that uses the observation and info
         self.num_action = env.action_space.n
         self.observation_space = env.observation_space
         self.num_observation_space = env.observation_space.shape[0]
+
+        self.learning_rate = lr
+        self.epsilon = epsilon
 
         self.model = self.setModel()
 
@@ -28,13 +32,20 @@ class agentTrain:
         l2 = Dense(256, activation = relu)(l1)
         l3 = Dense(self.num_action, activation = 'linear')(l2)
         model = tf.keras.Model(inputs = [l0], outputs = [l3])
-        model.compile(Adam(learning_rate = 0.001), loss = tf.keras.losses.mean_squared_error)
+        model.compile(Adam(learning_rate = self.learning_rate), loss = tf.keras.losses.mean_squared_error)
         return model
 
-
+    def epsilonGreedyAction(self, state):
+        if random.randrange(self.num_action) > self.epsilon:
+            return np.argmax(self.model.predict(state))
+        else:
+            return np.random.randint(self.num_action)
+            
 if __name__ == '__main__':
     env = gym.make("LunarLander-v2") #, render_mode="human"
-
-    trainAgent = agentTrain(env)
+    
+    lr = 0.001
+    epsilon = 0.1
+    trainAgent = agentTrain(env, lr, epsilon)
 
     env.close()
