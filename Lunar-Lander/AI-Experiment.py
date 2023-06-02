@@ -12,7 +12,7 @@ class agentTrain:
 
     def __init__(self, env, lr, epsilon): 
         self.env = env
-        self.action = env.action_space # agent policy that uses the observation and info
+        self.action = env.action_space
         self.num_action = env.action_space.n
         self.observation_space = env.observation_space
         self.num_observation_space = env.observation_space.shape[0]
@@ -47,21 +47,34 @@ class agentTrain:
             print("Episode : ", episode)
             state = self.env.reset()
             print("State Shape: ", state[0].shape)
-            reward = 0
-            steps = 5
+            rewardEpisode = 0
+            steps = 500
             state = np.reshape(state[0], [1, self.num_observation_space])
 
             for step in range(steps):
                 action = self.epsilonGreedyAction(state)
                 print("Action = ", action)
+                nextState = env.step(action)[0]
+                reward = env.step(action)[1]
+                status = env.step(action)[2]
+                info = env.step(action)[3]
+                self.env.render()
+
+                nextState = np.reshape(nextState, [1, self.num_observation_space])
+
+                rewardEpisode += reward
+                state = nextState
+
+                if status:
+                    break
 
             
 if __name__ == '__main__':
-    env = gym.make("LunarLander-v2") #, render_mode="human"
+    env = gym.make("LunarLander-v2", render_mode="human") 
     
     lr = 0.001
-    epsilon = 0.1
+    epsilon = 1
     trainAgent = agentTrain(env, lr, epsilon)
-    trainAgent.agentTrain(1)
+    trainAgent.agentTrain(10)
 
     env.close()
