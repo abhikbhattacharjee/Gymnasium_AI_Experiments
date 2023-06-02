@@ -11,6 +11,7 @@ import random
 class agentTrain:
 
     def __init__(self, env, lr, epsilon): 
+        self.env = env
         self.action = env.action_space # agent policy that uses the observation and info
         self.num_action = env.action_space.n
         self.observation_space = env.observation_space
@@ -40,6 +41,20 @@ class agentTrain:
             return np.argmax(self.model.predict(state))
         else:
             return np.random.randint(self.num_action)
+
+    def agentTrain(self, episodes):
+        for episode in range(episodes):
+            print("Episode : ", episode)
+            state = self.env.reset()
+            print("State Shape: ", state[0].shape)
+            reward = 0
+            steps = 5
+            state = np.reshape(state[0], [1, self.num_observation_space])
+
+            for step in range(steps):
+                action = self.epsilonGreedyAction(state)
+                print("Action = ", action)
+
             
 if __name__ == '__main__':
     env = gym.make("LunarLander-v2") #, render_mode="human"
@@ -47,5 +62,6 @@ if __name__ == '__main__':
     lr = 0.001
     epsilon = 0.1
     trainAgent = agentTrain(env, lr, epsilon)
+    trainAgent.agentTrain(1)
 
     env.close()
