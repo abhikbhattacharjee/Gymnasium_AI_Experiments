@@ -7,10 +7,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+from collections import deque
 
 class agentTrain:
 
-    def __init__(self, env, lr, epsilon): 
+    def __init__(self, env, lr, epsilon, epsilonDecay, gamma): 
         self.env = env
         self.action = env.action_space
         self.num_action = env.action_space.n
@@ -19,6 +20,14 @@ class agentTrain:
 
         self.learning_rate = lr
         self.epsilon = epsilon
+        self.minEpsilon = 0.01
+        self.decay = epsilonDecay
+        self.discount = gamma
+
+        self.count = 0
+        self.rewardList = []
+        self.buffer = deque(maxlen = 1000000000)
+        self.batchSize = 64
 
         self.model = self.setModel()
 
@@ -41,12 +50,21 @@ class agentTrain:
             return np.argmax(self.model.predict(state))
         else:
             return np.random.randint(self.num_action)
+    
+    def addToBuffer(self, state, action, reward, nextState, status):
+        self.buffer.append((state, action, reward, nextState, status))
+
+    def counterUpdate(self):
+        self.count += 1
+        step = 5
+        self.count = self.count % step
 
     def agentTrain(self, episodes):
         for episode in range(episodes):
             print("Episode : ", episode)
+            print("Epsilon : ", self.epsilon)
             state = self.env.reset()
-            print("State Shape: ", state[0].shape)
+            # print("State Shape: ", state[0].shape)
             rewardEpisode = 0
             steps = 500
             state = np.reshape(state[0], [1, self.num_observation_space])
@@ -61,12 +79,20 @@ class agentTrain:
                 self.env.render()
 
                 nextState = np.reshape(nextState, [1, self.num_observation_space])
+                self.addToBuffer(state, action, reward, nextState, status)
 
                 rewardEpisode += reward
                 state = nextState
 
+                self.counterUpdate()
+
                 if status:
                     break
+            print("Reward for Episode : ", rewardEpisode)
+            self.rewardList.append(rewardEpisode)
+
+            if self.epsilon > self.minEpsilon:
+                self.epsilon *= self.decay
 
             
 if __name__ == '__main__':
@@ -74,7 +100,10 @@ if __name__ == '__main__':
     
     lr = 0.001
     epsilon = 1
-    trainAgent = agentTrain(env, lr, epsilon)
+    epsilonDecay = 0.99
+    gamma = 0.99
+
+    trainAgent = agentTrain(env, lr, epsilon, epsilonDecay, gamma)
     trainAgent.agentTrain(10)
 
     env.close()
