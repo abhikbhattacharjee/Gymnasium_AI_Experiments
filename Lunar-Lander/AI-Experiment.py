@@ -94,6 +94,15 @@ class agentTrain:
             if self.epsilon > self.minEpsilon:
                 self.epsilon *= self.decay
 
+    def updateModel(self):
+        if len(self.buffer) < self.batchSize or self.count != 0:
+            return
+
+        randomSample = random.sample(self.buffer, self.batchSize)
+        print(randomSample[0])
+
+        # state, action, reward, nextState, status = 
+
             
 if __name__ == '__main__':
     env = gym.make("LunarLander-v2", render_mode="human") 
@@ -105,5 +114,6 @@ if __name__ == '__main__':
 
     trainAgent = agentTrain(env, lr, epsilon, epsilonDecay, gamma)
     trainAgent.agentTrain(10)
+    trainAgent.updateModel()
 
     env.close()
