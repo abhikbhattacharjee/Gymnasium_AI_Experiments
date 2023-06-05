@@ -99,7 +99,7 @@ class agentTrain:
             return
 
         randomSample = random.sample(self.buffer, self.batchSize)
-        print(randomSample[0])
+        print(randomSample[0][1])
 
         # state, action, reward, nextState, status = 
 
