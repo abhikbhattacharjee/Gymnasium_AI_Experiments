@@ -85,6 +85,7 @@ class agentTrain:
                 state = nextState
 
                 self.counterUpdate()
+                self.updateModel()
 
                 if status:
                     break
@@ -93,15 +94,36 @@ class agentTrain:
 
             if self.epsilon > self.minEpsilon:
                 self.epsilon *= self.decay
+            lastRewardMean = np.mean(self.rewardList[-100:])
+
+            if lastRewardMean > 200:
+                print("Training Complete")
+                break
+
+            self.model.save('model.h5', overwrite = True)
+
+    def attrFromSample(self, sample):
+        states = np.squeeze(np.squeeze(np.array([i[0] for i in sample])))
+        actions = np.array([i[1] for i in sample])
+        rewards = np.array([i[2] for i in sample])
+        nextState = np.squeeze(np.array([i[3] for i in sample]))
+        status = np.array([i[4] for i in sample])
+        return states, actions, rewards, nextState, status
 
     def updateModel(self):
         if len(self.buffer) < self.batchSize or self.count != 0:
             return
 
         randomSample = random.sample(self.buffer, self.batchSize)
-        print(randomSample[0][1])
+        # print(randomSample[0][1])
+        state, action, reward, nextState, status = self.attrFromSample(randomSample)
 
-        # state, action, reward, nextState, status = 
+        target = reward + self.discount * (np.max(self.model.predict_on_batch(nextState), axis=1)) * (1 - status)
+        targetVector = self.model.predict_on_batch(state)
+        indexes = np.array([i for i in range(self.batchSize)])
+        targetVector[[indexes], [action]] = target
+
+        self.model.fit(state, targetVector, epochs=1, verbose=0)
 
             
 if __name__ == '__main__':
@@ -113,7 +135,7 @@ if __name__ == '__main__':
     gamma = 0.99
 
     trainAgent = agentTrain(env, lr, epsilon, epsilonDecay, gamma)
-    trainAgent.agentTrain(10)
+    trainAgent.agentTrain(2000)
     trainAgent.updateModel()
 
     env.close()
